@@ -6,7 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # Load data (replace with your actual data path)
-data = pd.read_csv('https://raw.githubusercontent.com/CHEAH80/MCM7183_Project/refs/heads/main/population_malaysia_2024.csv')
+data = pd.read_csv('https://raw.githubusercontent.com/CHEAH80/MCM7183_Population_Malaysia/main/assets/population_malaysia_2024.csv')
 
 # Filter data for first page (Home Page)
 filtered_data = data[(data['sex'] == 'both') & (data['ethnicity'] == 'overall')]
