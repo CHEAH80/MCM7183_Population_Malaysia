@@ -21,6 +21,7 @@ years = df_filtered_ethnicity['year'].unique()
 # Initialize the app with suppress_callback_exceptions=True and set the title
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
 app.title = "Malaysia Population By Cheah Yew Chung"  # Set the app title here
+server = app.server
 
 # Side navigation layout with "Navigation" title
 side_nav = dbc.Nav(
