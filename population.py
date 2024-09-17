@@ -18,8 +18,9 @@ df_filtered = data[(data['ethnicity'] == 'overall') & (data['sex'] != 'both')]
 df_filtered_ethnicity = data[data['ethnicity'] != 'overall']
 years = df_filtered_ethnicity['year'].unique()
 
-# Initialize the app with suppress_callback_exceptions=True
+# Initialize the app with suppress_callback_exceptions=True and set the title
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
+app.title = "Malaysia Population By Cheah Yew Chung"  # Set the app title here
 
 # Side navigation layout with "Navigation" title
 side_nav = dbc.Nav(
@@ -59,7 +60,13 @@ def create_home_page():
 
     fig1.update_layout(title={'text': "Population in Millions Over The Years", 'x': 0.5, 'font': {'size': 24}})
     
-    return html.Div([dcc.Graph(figure=fig1)])
+    # Add the image at the bottom center
+    image_url = "https://raw.githubusercontent.com/CHEAH80/MCM7183_Population_Malaysia/main/assets/malaysia.jpg"
+    image = html.Div([
+        html.Img(src=image_url, style={'width': '300px', 'display': 'block', 'margin': 'auto'}),
+    ], style={'textAlign': 'center', 'marginTop': '20px'})
+
+    return html.Div([dcc.Graph(figure=fig1), image])
 
 # Content for Page 1
 def create_page_1():
@@ -69,7 +76,14 @@ def create_page_1():
     fig2 = px.bar(df_final, x='sex', y='population', color='sex', animation_frame='year',
                   title="Population by Sex and Year")
     fig2.update_layout(title={'text': "Population in Millions by Sex and Year", 'x': 0.5, 'font': {'size': 24}})
-    return html.Div([dcc.Graph(figure=fig2)])
+
+    # Add the image at the bottom center
+    image_url = "https://raw.githubusercontent.com/CHEAH80/MCM7183_Population_Malaysia/main/assets/malaysia.jpg"
+    image = html.Div([
+        html.Img(src=image_url, style={'width': '300px', 'display': 'block', 'margin': 'auto'}),
+    ], style={'textAlign': 'center', 'marginTop': '20px'})
+
+    return html.Div([dcc.Graph(figure=fig2), image])
 
 # Content for Page 2
 def create_page_2():
@@ -86,8 +100,14 @@ def create_page_2():
     
     fig3.update_layout(updatemenus=[{'buttons': [{'args': [None, {'frame': {'duration': 500, 'redraw': True}, 'fromcurrent': True}], 'label': 'Play', 'method': 'animate'}]}],
                        sliders=[{'steps': [{'args': [[str(year)], {'frame': {'duration': 500, 'redraw': True}, 'mode': 'immediate'}], 'label': str(year), 'method': 'animate'} for year in years]}])
-    
-    return html.Div([dcc.Graph(figure=fig3)])
+
+    # Add the image at the bottom center
+    image_url = "https://raw.githubusercontent.com/CHEAH80/MCM7183_Population_Malaysia/main/assets/malaysia.jpg"
+    image = html.Div([
+        html.Img(src=image_url, style={'width': '300px', 'display': 'block', 'margin': 'auto'}),
+    ], style={'textAlign': 'center', 'marginTop': '20px'})
+
+    return html.Div([dcc.Graph(figure=fig3), image])
 
 # Main layout with side navigation and content
 app.layout = dbc.Container([
