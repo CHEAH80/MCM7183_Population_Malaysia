@@ -28,8 +28,8 @@ side_nav = dbc.Nav(
     [
         html.H5("Navigation", className="my-3"),  # Title added above the navigation links
         dbc.NavLink("Home Page", href="/", active="exact"),
-        dbc.NavLink("Page 1", href="/page-1", active="exact"),
-        dbc.NavLink("Page 2", href="/page-2", active="exact"),
+        dbc.NavLink("By Sex", href="/page-1", active="exact"),
+        dbc.NavLink("By Ethnicity", href="/page-2", active="exact"),
     ],
     vertical=True,
     pills=True,
@@ -91,7 +91,7 @@ def create_page_2():
     fig3 = go.Figure()
     df_year = df_filtered_ethnicity[df_filtered_ethnicity['year'] == years[0]]
     fig3.add_trace(go.Pie(labels=df_year['ethnicity'], values=df_year['population'], textinfo='label+percent'))
-    fig3.update_layout(title={'text': "Population Distribution by Ethnicity", 'x': 0.5, 'font': {'size': 24}})
+    fig3.update_layout(title={'text': "Population Distribution by Ethnicity and Year", 'x': 0.5, 'font': {'size': 24}})
     
     frames = [go.Frame(data=[go.Pie(labels=df_filtered_ethnicity[df_filtered_ethnicity['year'] == year]['ethnicity'],
                                     values=df_filtered_ethnicity[df_filtered_ethnicity['year'] == year]['population'],
