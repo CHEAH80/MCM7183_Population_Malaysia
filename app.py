@@ -6,19 +6,18 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # Load data
-data = pd.read_csv('https://raw.githubusercontent.com/CHEAH80/Project_Population_Malaysia/refs/heads/main/assets/population_malaysia.csv')
+data = pd.read_csv('https://raw.githubusercontent.com/CHEAH80/MCM7183_Population_Malaysia/refs/heads/main/assets/population_malaysia.csv')
 
 # Filter data for home page
-filtered_data = data[(data['sex'] == 'both') & (data['age'] == 'overall') & (data['ethnicity'] == 'overall')]
+home_data = data[(data['sex'] == 'both') & (data['age'] == 'overall') & (data['ethnicity'] == 'overall')]
 
 # Filter data for Page 1
-df_filtered = data[(data['year'] >= 1970) & (data['sex'].isin(['male', 'female'])) & 
-                   (data['age'] == 'overall') & 
-                   (data['ethnicity'] == 'overall')]
+sex_data = data[(data['year'] >= 1970) & (data['sex'].isin(['male', 'female'])) & 
+                (data['age'] == 'overall') & (data['ethnicity'] == 'overall')]
 
 # Filter data for Page 2
-df_filtered_ethnicity = data[data['ethnicity'] != 'overall']
-years = df_filtered_ethnicity['year'].unique()
+ethnicity_data = data[data['ethnicity'] != 'overall']
+years = ethnicity_data['year'].unique()
 
 # Initialize the app
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
@@ -27,16 +26,12 @@ server = app.server
 
 # Sidebar layout with logo
 side_nav = dbc.Nav(
-    [
-        html.Div(
-            html.Img(src="https://raw.githubusercontent.com/CHEAH80/Project_Population_Malaysia/refs/heads/main/assets/logo-mmu.png", 
-                     style={'width': '100%', 'marginBottom': '10px'}), 
-            style={'textAlign': 'center'}
-        ),
+    [    
         html.H5("Navigation", className="my-3"),
         dbc.NavLink("Home Page", href="/", active="exact"),
         dbc.NavLink("By Sex", href="/page-1", active="exact"),
         dbc.NavLink("By Ethnicity", href="/page-2", active="exact"),
+        dbc.NavLink("By Age", href="/page-3", active="exact"),  # New Page Link
     ],
     vertical=True,
     pills=True,
@@ -46,44 +41,60 @@ side_nav = dbc.Nav(
 # Title style
 title_style = {'fontSize': '24px', 'textAlign': 'center', 'marginTop': '20px'}
 
-# Content for Home Page
+# Reusable function to add image with the Summary button and text on top
+def add_image_with_summary(image_url, button_id, text_id, summary_text):
+    return html.Div([ 
+        html.Button("Summary", id=button_id, n_clicks=0, style={'display': 'block', 'margin': '20px auto'}),
+        html.Div(summary_text, id=text_id, style={'textAlign': 'center', 'display': 'none', 'marginTop': '10px'}),
+        html.Div(style={'height': '20px'}),  
+        html.Img(src=image_url, style={'width': '300px', 'display': 'block', 'margin': 'auto'}),
+    ], style={'textAlign': 'center', 'marginTop': '20px'})
+
+# Home Page
 def create_home_page():
-    # Create the scatter plot
     fig = px.scatter(
-        filtered_data, 
+        home_data, 
         x='year', 
         y='population', 
-        color='population',  # Color based on population
-        size='population',   # Size based on population
-        title='',  # Set title as empty since we will add it below
+        color='population',  
+        size='population',
         labels={'year': 'Year', 'population': 'Population'}
     )
 
-    # Add a trendline to the scatter plot
     fig.add_traces(go.Scatter(
-        x=filtered_data['year'], 
-        y=filtered_data['population'], 
+        x=home_data['year'], 
+        y=home_data['population'], 
         mode='lines', 
         name='Trendline',
         line=dict(color='red', width=2),
         showlegend=True
     ))
 
-    # Customize the layout to have the same blue background as Page 1
     fig.update_layout(
         xaxis_title="Year",
         yaxis_title="Population",
         title_x=0.5,
-        plot_bgcolor='rgba(0,0,255,0.1)',  # Set background to light blue
-        xaxis=dict(showgrid=True, gridwidth=1, gridcolor='LightGray'),
+        plot_bgcolor='rgba(0,0,255,0.1)',  
+        xaxis=dict(
+            showgrid=True, 
+            gridwidth=1, 
+            gridcolor='LightGray',
+            rangeslider=dict(visible=True),  
+            rangeselector=dict(               
+                buttons=list([
+                    dict(count=10, label="Last 10 Years", step="year", stepmode="backward"),
+                    dict(count=20, label="Last 20 Years", step="year", stepmode="backward"),
+                    dict(step="all", label="All Time")
+                ])
+            )
+        ),
         yaxis=dict(showgrid=True, gridwidth=1, gridcolor='LightGray'),
         font=dict(size=14)
     )
 
-    # Add annotation for the year 2020
     fig.add_annotation(
         x=2020,
-        y=filtered_data[filtered_data['year'] == 2020]['population'].values[0],  # Get population for 2020
+        y=home_data[home_data['year'] == 2020]['population'].values[0],
         text="Population drop due to COVID-19",
         showarrow=True,
         arrowhead=2,
@@ -92,103 +103,245 @@ def create_home_page():
         font=dict(color='black', size=12)
     )
 
-    # Add image
     image_url = "https://raw.githubusercontent.com/CHEAH80/MCM7183_Population_Malaysia/main/assets/malaysia.jpg"
-    image = html.Div([
-        html.Img(src=image_url, style={'width': '300px', 'display': 'block', 'margin': 'auto'}),
-    ], style={'textAlign': 'center', 'marginTop': '20px'})
-
-    return html.Div([
-        html.H1("Population in Millions over the Years", style=title_style),  # Main title
-        dcc.Graph(figure=fig), 
-        image
-    ])
-
-# Content for Page 1
-def create_page_1():
-    # Calculate combined population for "Both"
-    df_combined = df_filtered.groupby('year').agg({'population': 'sum'}).reset_index()
-    df_combined['sex'] = 'Both'
-
-    # Append the combined data to the existing filtered DataFrame
-    df_combined_full = pd.concat([df_filtered, df_combined], ignore_index=True)
-
-    # Create the bar chart with the combined value included
-    fig2 = px.bar(df_combined_full, x='sex', y='population', color='sex', 
-                  animation_frame='year',
-                  title="Population by Sex and Year")
+    summary_text = ("The Malaysian population exhibited a consistent growth trajectory from 1970 to 2024. "
+                    "However, a unique demographic anomaly occurred in 2020, marked by a decline in population "
+                    "due to the unprecedented impact of the COVID-19 pandemic. Subsequent to this temporary downturn, "
+                    "the population gradually rebounded in 2021, and by 2023, the growth rate had returned to its historical norm.")
     
-    # Add population labels on top of bars
-    fig2.update_traces(texttemplate='%{y}', textposition='outside')
-
-    fig2.update_layout(
-        title={'text': "Population in Millions by Sex and Year", 'x': 0.5, 'font': {'size': 24}},
-        plot_bgcolor='rgba(0,0,255,0.1)'  # Blue background
-    )
-
-    # Add image
-    image_url = "https://raw.githubusercontent.com/CHEAH80/MCM7183_Population_Malaysia/main/assets/malaysia.jpg"
-    image = html.Div([
-        html.Img(src=image_url, style={'width': '300px', 'display': 'block', 'margin': 'auto'}),
-    ], style={'textAlign': 'center', 'marginTop': '20px'})
-
     return html.Div([
-        dcc.Graph(figure=fig2),  # Only keep the figure and image
-        image
+        html.H1("Population in Millions over the Years", style=title_style),
+        dcc.Graph(figure=fig),
+        add_image_with_summary(image_url, "summary-button-home", "summary-text-home", summary_text)
     ])
 
-# Content for Page 2
+# Page 1 - Population by Sex with Summary Button and Image
+def create_page_1():
+    combined_data = sex_data.groupby('year').agg({'population': 'sum'}).reset_index()
+    combined_data['sex'] = 'Both'
+    all_sex_data = pd.concat([sex_data, combined_data], ignore_index=True)
+    
+    fig = px.bar(all_sex_data, x='sex', y='population', color='sex', animation_frame='year',
+                 title="Population by Sex and Year")
+    fig.update_traces(texttemplate='%{y}', textposition='outside')
+    fig.update_layout(title={'text': "Population in Millions by Sex and Year", 'x': 0.5, 'font': {'size': 24}},
+                      plot_bgcolor='rgba(0,0,255,0.1)')
+    
+    # Add the image and summary text for Page 1
+    image_url = "https://raw.githubusercontent.com/CHEAH80/MCM7183_Population_Malaysia/main/assets/malaysia.jpg"
+    summary_text = ("According to the bar chart, Malaysia has consistently exhibited a male-dominant population structure. "
+                    "This trend is further substantiated by data indicating a significant increase in the male population compared to females from 1970 to 2024. "
+                    "The disparity is particularly noteworthy, with males outnumbering females by a margin ranging from 2.85% to 10.55% during this period. "
+                    "For a deeper exploration of this phenomenon, you can refer to the UPM research portal link"
+                    " (https://myageing.upm.edu.my/artikel/interactive_malaysias_skewed_sex_ratio_what_it_means_and_what_must_be_done-67695).")
+
+    return html.Div([
+        html.H1("Population by Sex", style=title_style),
+        dcc.Graph(figure=fig),
+        add_image_with_summary(image_url, "summary-button-page-1", "summary-text-page-1", summary_text)
+    ])
+
+# Page 2 - Population by Ethnicity with Slider and Summary Button
 def create_page_2():
-    fig3 = go.Figure()
-    df_year = df_filtered_ethnicity[df_filtered_ethnicity['year'] == years[0]]
-    fig3.add_trace(go.Pie(labels=df_year['ethnicity'], values=df_year['population'], textinfo='label+percent'))
-    fig3.update_layout(title={'text': "Population Distribution by Ethnicity and Year", 'x': 0.5, 'font': {'size': 24}})
+    fig = go.Figure()
+    df_year = ethnicity_data[ethnicity_data['year'] == years[0]]
+    fig.add_trace(go.Pie(labels=df_year['ethnicity'], values=df_year['population'], textinfo='label+percent'))
+    
+    fig.update_layout(title={'text': "Population Distribution by Ethnicity and Year", 'x': 0.5, 'font': {'size': 24}})
 
-    frames = [go.Frame(data=[go.Pie(labels=df_filtered_ethnicity[df_filtered_ethnicity['year'] == year]['ethnicity'],
-                                    values=df_filtered_ethnicity[df_filtered_ethnicity['year'] == year]['population'],
-                                    textinfo='label+percent')],
+    frames = [go.Frame(data=[go.Pie(labels=ethnicity_data[ethnicity_data['year'] == year]['ethnicity'],
+                                    values=ethnicity_data[ethnicity_data['year'] == year]['population'],
+                                    textinfo='label+percent')], 
                        name=str(year)) for year in years]
-    fig3.frames = frames
+    
+    fig.frames = frames
 
-    fig3.update_layout(
-        updatemenus=[{'buttons': [{'args': [None, {'frame': {'duration': 500, 'redraw': True}, 'fromcurrent': True}], 'label': 'Play', 'method': 'animate'}]}],
-        sliders=[{'steps': [{'args': [[str(year)], {'frame': {'duration': 500, 'redraw': True}, 'mode': 'immediate'}], 'label': str(year), 'method': 'animate'} for year in years]}],
-        plot_bgcolor='rgba(0,0,255,0.1)'  # Set background to light blue
+    fig.update_layout(
+        updatemenus=[{'buttons': [{'args': [None, {'frame': {'duration': 500, 'redraw': True}, 'fromcurrent': True}], 
+                                    'label': 'Play', 'method': 'animate'}]}],
+        sliders=[{'steps': [{'args': [[str(year)], {'frame': {'duration': 500, 'redraw': True}, 'mode': 'immediate'}], 
+                            'label': str(year), 'method': 'animate'} for year in years]}],
+        plot_bgcolor='rgba(0,0,255,0.1)'
     )
 
-    # Add image
     image_url = "https://raw.githubusercontent.com/CHEAH80/MCM7183_Population_Malaysia/main/assets/malaysia.jpg"
-    image = html.Div([
-        html.Img(src=image_url, style={'width': '300px', 'display': 'block', 'margin': 'auto'}),
-    ], style={'textAlign': 'center', 'marginTop': '20px'})
+    summary_text = ("The pie chart reveals a significant evolution in Malaysia's ethnic composition between 1980 and 2024. "
+                    "Notably, the relative proportions of the Chinese and Indian populations have decreased during this period. "
+                    "Additionally, the Bumiputera category has transformed, expanding from a single classification to encompass both Malay Bumiputera "
+                    "and Other Bumiputera, including indigenous groups such as Orang Asli, Siam, Sabahan, and Sarawakian. "
+                    "A particularly noteworthy trend is the substantial growth in the Other non-citizens category,"
+                    "increasing from 2.18% in 1980 to 9.97% in 2024. This demographic shift can be attributed in part to Malaysia's government"
+                    "policy of accepting refugees from conflict-ridden regions and the allure of Malaysia's lower cost of living, "
+                    "which has attracted migrants from developed countries such as China, Japan, and Korea.")
 
     return html.Div([
-        dcc.Graph(figure=fig3),  # Only keep the figure and image
-        image
+        html.H1("Population by Ethnicity", style=title_style),
+        dcc.Graph(figure=fig),
+        add_image_with_summary(image_url, "summary-button-page-2", "summary-text-page-2", summary_text)
     ])
 
-# Main layout with side navigation and content
+# Page 3 - Population Pyramid by Age and Summary Button
+def create_page_3():
+    years = data['year'].unique()
+    initial_year = years[-1]  # Set to the most recent year available
+
+    fig = create_pyramid_chart(data, initial_year)
+
+    image_url = "https://raw.githubusercontent.com/CHEAH80/MCM7183_Population_Malaysia/main/assets/malaysia.jpg"
+    summary_text = ("The population pyramid for Malaysia has undergone a significant transformation from 1970 to 2024, "
+                    "transitioning from a classic triangular shape to a more columnar structure. This shift is characterized by "
+                    "a narrowing of the base, representing the younger age groups, and a corresponding expansion of the middle-aged cohort. "
+                    "This demographic evolution suggests a growing proportion of individuals within the productive age range, "
+                    "coupled with a rising elderly population as the number of younger generations diminishes.")
+                   
+
+    return html.Div([
+        html.H1("Population Pyramid by Age", style=title_style),
+        dcc.Dropdown(
+            id='year-dropdown',
+            options=[{'label': year, 'value': year} for year in years],
+            value=initial_year,
+            clearable=False,
+            style={'marginBottom': '20px'}
+        ),
+        dcc.Graph(id='population-pyramid', figure=fig),
+        add_image_with_summary(image_url, "summary-button-page-3", "summary-text-page-3", summary_text)
+    ])
+
+# Function to create population pyramid chart
+def create_pyramid_chart(df, year):
+    filtered_data = filter_data(df, year)
+    
+    males = filtered_data[filtered_data['sex'] == 'male']
+    females = filtered_data[filtered_data['sex'] == 'female']
+    
+    fig = go.Figure()
+
+    # Add male trace (left side, population negative)
+    fig.add_trace(go.Bar(
+        x=-males['population'],
+        y=males['age'],
+        name=f'Male {year}',
+        orientation='h',
+        marker_color='rgba(0, 123, 255, 0.8)',
+        hoverinfo='x+y+text',
+    ))
+
+    # Add female trace (right side, population positive)
+    fig.add_trace(go.Bar(
+        x=females['population'],
+        y=females['age'],
+        name=f'Female {year}',
+        orientation='h',
+        marker_color='rgba(255, 99, 132, 0.8)',
+        hoverinfo='x+y+text',
+    ))
+
+    # Update layout
+    fig.update_layout(
+        title=f'Population Pyramid for {year}',
+        xaxis=dict(
+            title='Population',
+            tickfont_size=12,
+            zeroline=True,
+            zerolinecolor='gray'
+        ),
+        yaxis=dict(
+            title='Age Group',
+            tickfont_size=12,
+        ),
+        barmode='overlay',
+        bargap=0.1,
+        paper_bgcolor='white',
+        plot_bgcolor='whitesmoke',
+        margin=dict(l=100, r=100, t=100, b=100),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5
+        ),
+    )
+
+    return fig
+
+# Filter data for population pyramid
+def filter_data(df, year):
+    filtered_df = df[(df['sex'].isin(['male', 'female'])) & 
+                     (df['year'] == year) & 
+                     (df['age'] != 'overall') & 
+                     (df['ethnicity'] == 'overall')]  # Exclude 'overall' age group and focus on overall ethnicity
+    return filtered_df
+
+# App callback to update the pyramid chart based on selected year
+@app.callback(
+    Output('population-pyramid', 'figure'),
+    Input('year-dropdown', 'value')
+)
+def update_pyramid_chart(selected_year):
+    return create_pyramid_chart(data, selected_year)
+
+# Individual callbacks for toggling the summary text visibility for each page
+@app.callback(
+    Output('summary-text-home', 'style'),
+    Input('summary-button-home', 'n_clicks')
+)
+def toggle_home_summary_text(n_clicks_home):
+    if n_clicks_home and n_clicks_home % 2 == 1:
+        return {'display': 'block'}
+    return {'display': 'none'}
+
+@app.callback(
+    Output('summary-text-page-1', 'style'),
+    Input('summary-button-page-1', 'n_clicks')
+)
+def toggle_page_1_summary_text(n_clicks_page_1):
+    if n_clicks_page_1 and n_clicks_page_1 % 2 == 1:
+        return {'display': 'block'}
+    return {'display': 'none'}
+
+@app.callback(
+    Output('summary-text-page-2', 'style'),
+    Input('summary-button-page-2', 'n_clicks')
+)
+def toggle_page_2_summary_text(n_clicks_page_2):
+    if n_clicks_page_2 and n_clicks_page_2 % 2 == 1:
+        return {'display': 'block'}
+    return {'display': 'none'}
+
+@app.callback(
+    Output('summary-text-page-3', 'style'),
+    Input('summary-button-page-3', 'n_clicks')
+)
+def toggle_page_3_summary_text(n_clicks_page_3):
+    if n_clicks_page_3 and n_clicks_page_3 % 2 == 1:
+        return {'display': 'block'}
+    return {'display': 'none'}
+
+# Main Layout
 app.layout = dbc.Container([
     dcc.Location(id='url', refresh=False),
     dbc.Row([dbc.Col(html.H1("The Population of Malaysia", className="text-center"), width=12)], className="mt-5"),
     dbc.Row([dbc.Col(html.H1("(1970 - 2024)", className="text-center"), width=12)], className="mb-4"),
-    dbc.Row([dbc.Col(side_nav, width=2), dbc.Col(html.Div(id='page-content'), width=10)])
-])
+    dbc.Row([
+        dbc.Col(side_nav, width=1),  # Sidebar
+        dbc.Col(html.Div(id='page-content', className="a4-margin"), width=7, className="offset-")  # Main content centered
+    ], justify="center")  # Center the row content
+], fluid=True)
 
-# Callback to update page content based on selected tab
-@app.callback(
-    Output('page-content', 'children'),
-    [Input('url', 'pathname')]
-)
+# Update the page content based on the current URL path
+@app.callback(Output("page-content", "children"), [Input("url", "pathname")])
 def display_page(pathname):
-    if pathname == '/':
-        return create_home_page()
-    elif pathname == '/page-1':
+    if pathname == "/page-1":
         return create_page_1()
-    elif pathname == '/page-2':
+    elif pathname == "/page-2":
         return create_page_2()
-    return "404 - Page Not Found"
+    elif pathname == "/page-3":
+        return create_page_3()
+    else:
+        return create_home_page()
 
 # Run the app
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run_server(debug=True) 
