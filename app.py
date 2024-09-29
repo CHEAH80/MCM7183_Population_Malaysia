@@ -35,7 +35,7 @@ side_nav = dbc.Nav(
     ],
     vertical=True,
     pills=True,
-    className="bg-light"
+    style={"backgroundColor": "#ede8ff"}  # Light blue background color
 )
 
 # Title style
@@ -192,8 +192,10 @@ def create_page_3():
                     "transitioning from a classic triangular shape to a more columnar structure. This shift is characterized by "
                     "a narrowing of the base, representing the younger age groups, and a corresponding expansion of the middle-aged cohort. "
                     "This demographic evolution suggests a growing proportion of individuals within the productive age range, "
-                    "coupled with a rising elderly population as the number of younger generations diminishes.")
-                   
+                    "coupled with a rising elderly population as the number of younger generations diminishes. "
+                    "The data indicates that Malaysian life expectancy has increased significantly over the past few decades, "
+                    "rising from an average of 70+ years in 1970 to 84 years in 2024.")
+
 
     return html.Div([
         html.H1("Population Pyramid by Age", style=title_style),
@@ -202,7 +204,7 @@ def create_page_3():
             options=[{'label': year, 'value': year} for year in years],
             value=initial_year,
             clearable=False,
-            style={'marginBottom': '20px'}
+            style={'marginBottom': '20px', 'backgroundColor': '#ede8ff'}  # Light blue background color
         ),
         dcc.Graph(id='population-pyramid', figure=fig),
         add_image_with_summary(image_url, "summary-button-page-3", "summary-text-page-3", summary_text)
