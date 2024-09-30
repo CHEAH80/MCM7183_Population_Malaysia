@@ -170,7 +170,7 @@ def create_page_2():
                     "Additionally, the Bumiputera category has transformed, expanding from a single classification to encompass both Malay Bumiputera "
                     "and Other Bumiputera, including indigenous groups such as Orang Asli, Siam, Sabahan, and Sarawakian. "
                     "A particularly noteworthy trend is the substantial growth in the Other non-citizens category,"
-                    "increasing from 2.18% in 1980 to 9.97% in 2024. This demographic shift can be attributed in part to Malaysia's government"
+                    "increasing from 2.18% in 1980 to 9.97% in 2024. This demographic shift can be attributed in part to Malaysia's government "
                     "policy of accepting refugees from conflict-ridden regions and the allure of Malaysia's lower cost of living, "
                     "which has attracted migrants from developed countries such as China, Japan, and Korea.")
 
