@@ -123,9 +123,15 @@ def create_page_1():
     
     fig = px.bar(all_sex_data, x='sex', y='population', color='sex', animation_frame='year',
                  title="Population by Sex and Year")
+    
     fig.update_traces(texttemplate='%{y}', textposition='outside')
-    fig.update_layout(title={'text': "Population in Millions by Sex and Year", 'x': 0.5, 'font': {'size': 24}},
-                      plot_bgcolor='rgba(0,0,255,0.1)')
+    
+    # Set fixed y-axis range to 35,000
+    fig.update_layout(
+        title={'text': "Population in Millions by Sex and Year", 'x': 0.5, 'font': {'size': 24}},
+        plot_bgcolor='rgba(0,0,255,0.1)',
+        yaxis=dict(range=[0, 35000])  # Fixed y-axis range
+    )
     
     # Add the image and summary text for Page 1
     image_url = "https://raw.githubusercontent.com/CHEAH80/MCM7183_Population_Malaysia/main/assets/malaysia.jpg"
@@ -170,7 +176,7 @@ def create_page_2():
                     "Additionally, the Bumiputera category has transformed, expanding from a single classification to encompass both Malay Bumiputera "
                     "and Other Bumiputera, including indigenous groups such as Orang Asli, Siam, Sabahan, and Sarawakian. "
                     "A particularly noteworthy trend is the substantial growth in the Other non-citizens category,"
-                    "increasing from 2.18% in 1980 to 9.97% in 2024. This demographic shift can be attributed in part to Malaysia's government"
+                    "increasing from 2.18% in 1980 to 9.97% in 2024. This demographic shift can be attributed in part to Malaysia's government "
                     "policy of accepting refugees from conflict-ridden regions and the allure of Malaysia's lower cost of living, "
                     "which has attracted migrants from developed countries such as China, Japan, and Korea.")
 
